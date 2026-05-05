@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UDAAN 2026 — Volunteer Signup</title>
+<style>
+:root { --gold: #B8860B; --purple: #4B0082; --purple-light: #6A0DAD; --green: #2E7D32; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #F3E5F5 0%, #FFF8DC 100%); min-height: 100vh; padding: 20px; }
+.container { max-width: 600px; margin: 0 auto; }
+.header { background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: white; border-radius: 12px 12px 0 0; padding: 24px; text-align: center; }
+.header h1 { font-size: 1.5rem; margin-bottom: 4px; }
+.header .emoji { font-size: 2.5rem; margin-bottom: 8px; }
+.header p { opacity: 0.9; font-size: 0.85rem; }
+.event-info { background: white; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem; border-bottom: 3px solid var(--gold); }
+.event-info div { display: flex; align-items: center; gap: 6px; }
+.event-info .icon { font-size: 1.1rem; }
+.form-card { background: white; padding: 24px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-weight: 600; color: var(--purple); margin-bottom: 4px; font-size: 0.85rem; }
+.form-group .hint { font-size: 0.75rem; color: #666; margin-bottom: 4px; }
+input, select, textarea { width: 100%; padding: 10px 12px; border: 2px solid #E0E0E0; border-radius: 6px; font-size: 0.9rem; transition: border-color 0.2s; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--purple); }
+select[multiple] { height: 100px; }
+.required::after { content: ' *'; color: #C62828; }
+.btn { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--gold), #DAA520); color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(184,134,11,0.4); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.success-msg { display: none; text-align: center; padding: 32px; }
+.success-msg .check { font-size: 3rem; margin-bottom: 12px; }
+.success-msg h2 { color: var(--green); margin-bottom: 8px; }
+.success-msg p { color: #666; font-size: 0.9rem; }
+.footer { text-align: center; margin-top: 16px; font-size: 0.8rem; color: #666; }
+.footer a { color: var(--purple); }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 500px) { .row { grid-template-columns: 1fr; } .event-info { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="emoji">🪷</div>
+    <h1>UDAAN 2026 Grand Finale</h1>
+    <p>Volunteer Signup</p>
+  </div>
+  <div class="event-info">
+    <div><span class="icon">📅</span> Saturday, May 30, 2026</div>
+    <div><span class="icon">📍</span> Redmond High School PAC</div>
+    <div><span class="icon">⏰</span> Event: 3:00 – 8:00 PM</div>
+    <div><span class="icon">🕐</span> Volunteers: from 12:00 PM</div>
+  </div>
+  
+  <div class="form-card">
+    <div id="signup-form">
+      <p style="margin-bottom:16px;color:#444;font-size:0.9rem">Thank you for volunteering! Please fill in your details below. Jyothish will reach out with your role assignment.</p>
+      
+      <div class="form-group">
+        <label class="required">Full Name</label>
+        <input type="text" id="vol-name" placeholder="Your full name">
+      </div>
+      
+      <div class="row">
+        <div class="form-group">
+          <label class="required">Phone</label>
+          <input type="tel" id="vol-phone" placeholder="(425) 000-0000">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="vol-email" placeholder="you@email.com">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label class="required">Available From</label>
+          <select id="vol-from">
+            <option value="">Select...</option>
+            <option value="10:00 AM">10:00 AM (Full day)</option>
+            <option value="11:00 AM">11:00 AM</option>
+            <option value="12:00 PM">12:00 PM</option>
+            <option value="1:00 PM">1:00 PM</option>
+            <option value="2:00 PM">2:00 PM</option>
+            <option value="2:30 PM">2:30 PM</option>
+            <option value="3:00 PM">3:00 PM</option>
+            <option value="5:00 PM">5:00 PM</option>
+            <option value="6:00 PM">6:00 PM</option>
+            <option value="7:00 PM">7:00 PM</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="required">Available Until</label>
+          <select id="vol-until">
+            <option value="">Select...</option>
+            <option value="4:00 PM">4:00 PM</option>
+            <option value="5:00 PM">5:00 PM</option>
+            <option value="6:00 PM">6:00 PM</option>
+            <option value="7:00 PM">7:00 PM</option>
+            <option value="8:00 PM">8:00 PM</option>
+            <option value="8:30 PM">8:30 PM</option>
+            <option value="9:00 PM">9:00 PM</option>
+            <option value="10:00 PM">10:00 PM (Till teardown)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Preferred Area</label>
+        <div class="hint">Where would you like to help? We'll do our best to accommodate.</div>
+        <select id="vol-area">
+          <option value="">No preference — assign me anywhere</option>
+          <option value="Guest Check-in & Ushering">Guest Check-in & Ushering</option>
+          <option value="Backstage & Stage Support">Backstage & Stage Support</option>
+          <option value="Food & Lobby">Food & Lobby Management</option>
+          <option value="Photo Booth & Production">Photo Booth & Production Setup</option>
+          <option value="Tech & Media">Tech & Media Support</option>
+          <option value="Ceremonies & Awards">Ceremonies & Awards</option>
+          <option value="Scoring">Scoring & Judges Support</option>
+          <option value="Parking">Parking</option>
+          <option value="Tear Down">Tear Down (8–10 PM)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Special Skills</label>
+        <div class="hint">Hold Ctrl/Cmd to select multiple</div>
+        <select id="vol-skills" multiple>
+          <option value="Photography">Photography</option>
+          <option value="AV/Tech">AV / Tech experience</option>
+          <option value="First Aid">First Aid</option>
+          <option value="Stage experience">Stage experience</option>
+          <option value="Bilingual (Malayalam)">Bilingual (Malayalam)</option>
+          <option value="Event management">Event management</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Anything we should know?</label>
+        <textarea id="vol-restrictions" rows="2" placeholder="e.g. I can't lift heavy items, I'm a teenager, I need to leave by 6pm..."></textarea>
+      </div>
+
+      <button class="btn" id="submit-btn" onclick="submitSignup()">🪷 Sign Me Up!</button>
+    </div>
+
+    <div class="success-msg" id="success-msg">
+      <div class="check">✅</div>
+      <h2>You're signed up!</h2>
+      <p>Thank you for volunteering for UDAAN 2026. Jyothish will reach out with your role assignment soon.</p>
+      <p style="margin-top:12px"><strong>Questions?</strong> Contact Jyothish at (425) 442-2890</p>
+      <button class="btn" style="margin-top:20px;background:var(--purple)" onclick="resetForm()">Sign Up Another Person</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Questions? Contact <strong>Jyothish</strong> at (425) 442-2890</p>
+    <p style="margin-top:4px">UDAAN 2026 Dance Competition 🪷</p>
+  </div>
+</div>
+
+<script>
+const SHEETS_API = 'https://script.google.com/macros/s/AKfycbwlOoxY017kWhkoMQrp7UN1ZOA1lB-Zv01Fn9oY4ZWbymofYjpYZwIRE_YaCpoZBerj/exec';
+
+function submitSignup() {
+  const name = document.getElementById('vol-name').value.trim();
+  const phone = document.getElementById('vol-phone').value.trim();
+  const from = document.getElementById('vol-from').value;
+  const until = document.getElementById('vol-until').value;
+
+  if (!name) { alert('Please enter your name'); return; }
+  if (!phone) { alert('Please enter your phone number'); return; }
+  if (!from || !until) { alert('Please select your availability times'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  const vol = {
+    name,
+    phone,
+    email: document.getElementById('vol-email').value,
+    from,
+    until,
+    area: document.getElementById('vol-area').value,
+    restrictions: document.getElementById('vol-restrictions').value,
+    skills: Array.from(document.getElementById('vol-skills').selectedOptions).map(o => o.value)
+  };
+
+  fetch(SHEETS_API, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'}, body: JSON.stringify(vol) })
+    .then(() => {
+      document.getElementById('signup-form').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    })
+    .catch(() => {
+      document.getElementById('signup-form').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    });
+}
+
+function resetForm() {
+  document.getElementById('signup-form').style.display = 'block';
+  document.getElementById('success-msg').style.display = 'none';
+  document.getElementById('vol-name').value = '';
+  document.getElementById('vol-phone').value = '';
+  document.getElementById('vol-email').value = '';
+  document.getElementById('vol-restrictions').value = '';
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('submit-btn').textContent = '🪷 Sign Me Up!';
+}
+</script>
+</body>
+</html>
