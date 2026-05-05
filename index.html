@@ -694,7 +694,7 @@ function loadFromSheet() {
 
 function removeVolunteer(i) { const v=getVolunteers(); v.splice(i,1); saveVolunteers(v); renderSignup(); showToast('Removed locally. Edit Google Sheet to remove permanently.'); }
 
-function copySignupLink() { navigator.clipboard.writeText(window.location.href).then(()=>showToast('Link copied!')); }
+function copySignupLink() { navigator.clipboard.writeText('https://jyothishn.github.io/UdaanVolunteers/signup.html').then(()=>showToast('Signup link copied!')); }
 
 function renderGaps() {
   const pending = WORKSTREAMS.filter(ws => !ws.confirmed);
