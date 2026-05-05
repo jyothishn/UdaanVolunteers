@@ -238,7 +238,10 @@ body { padding-bottom: 50px; }
     <div class="registered-table">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <h3 style="color:var(--purple)">Registered Volunteers</h3>
-        <button class="btn btn-gold btn-sm" onclick="exportVolunteersCSV()">📥 Export CSV</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" style="background:var(--green);color:white" onclick="loadFromSheet()">🔄 Sync from Sheet</button>
+          <button class="btn btn-gold btn-sm" onclick="exportVolunteersCSV()">📥 Export CSV</button>
+        </div>
       </div>
       <div style="overflow-x:auto"><table id="volunteers-table">
         <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Available</th><th>Area</th><th>Skills</th><th>Restrictions</th><th>Actions</th></tr></thead>
@@ -634,6 +637,8 @@ function renderSignup() {
   document.getElementById('volunteers-tbody').innerHTML = html || '<tr><td colspan="8" style="text-align:center;color:var(--gray)">No volunteers registered yet</td></tr>';
 }
 
+const SHEETS_API = 'https://script.google.com/macros/s/AKfycbwlOoxY017kWhkoMQrp7UN1ZOA1lB-Zv01Fn9oY4ZWbymofYjpYZwIRE_YaCpoZBerj/exec';
+
 function registerVolunteer() {
   const name = document.getElementById('vol-name').value.trim();
   if (!name) { showToast('Name is required!'); return; }
@@ -646,13 +651,36 @@ function registerVolunteer() {
     restrictions: document.getElementById('vol-restrictions').value,
     skills: Array.from(document.getElementById('vol-skills').selectedOptions).map(o=>o.value)
   };
+  // Save to localStorage
   const vols = getVolunteers(); vols.push(vol); saveVolunteers(vols);
+  // Also push to Google Sheet
+  fetch(SHEETS_API, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(vol) })
+    .then(()=> showToast(`${name} registered & synced to sheet!`))
+    .catch(()=> showToast(`${name} registered locally (sheet sync failed)`));
   document.getElementById('vol-name').value=''; document.getElementById('vol-phone').value='';
   document.getElementById('vol-email').value=''; document.getElementById('vol-restrictions').value='';
-  renderSignup(); showToast(`${name} registered!`);
+  renderSignup();
 }
 
-function removeVolunteer(i) { const v=getVolunteers(); v.splice(i,1); saveVolunteers(v); renderSignup(); }
+function loadFromSheet() {
+  fetch(SHEETS_API)
+    .then(r => r.json())
+    .then(rows => {
+      if (!rows || !rows.length) return;
+      const vols = rows.map(r => ({
+        name: r['Name'] || '', phone: r['Phone'] || '', email: r['Email'] || '',
+        from: r['Available From'] || '', until: r['Available Until'] || '',
+        area: r['Area'] || '', skills: (r['Skills']||'').split(',').map(s=>s.trim()).filter(Boolean),
+        restrictions: r['Restrictions'] || ''
+      }));
+      saveVolunteers(vols);
+      renderSignup();
+      showToast(`Loaded ${vols.length} volunteers from sheet`);
+    })
+    .catch(e => console.log('Sheet load failed:', e));
+}
+
+function removeVolunteer(i) { const v=getVolunteers(); v.splice(i,1); saveVolunteers(v); renderSignup(); showToast('Removed locally. Edit Google Sheet to remove permanently.'); }
 
 function copySignupLink() { navigator.clipboard.writeText(window.location.href).then(()=>showToast('Link copied!')); }
 
@@ -944,6 +972,8 @@ seedVolunteers();
 
 loadData();
 renderAll();
+// Auto-sync from Google Sheet on load
+setTimeout(loadFromSheet, 1000);
 </script>
 </body>
 </html>
