@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UDAAN 2026 - Volunteer Management Command Center</title>
+<style>
+:root {
+  --gold: #B8860B;
+  --gold-light: #DAA520;
+  --gold-bg: #FFF8DC;
+  --purple: #4B0082;
+  --purple-light: #6A0DAD;
+  --purple-bg: #F3E5F5;
+  --green: #2E7D32;
+  --red: #C62828;
+  --orange: #F57C00;
+  --gray: #616161;
+  --white: #FFFFFF;
+  --bg: #FAFAFA;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #333; font-size: 14px; }
+.header { background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.header h1 { font-size: 1.5rem; }
+.header .subtitle { opacity: 0.9; font-size: 0.85rem; margin-top: 2px; }
+.header .event-info { text-align: right; font-size: 0.8rem; opacity: 0.9; }
+.tabs { display: flex; background: var(--white); border-bottom: 3px solid var(--gold); overflow-x: auto; }
+.tab { padding: 12px 20px; cursor: pointer; font-weight: 600; color: var(--gray); border: none; background: none; white-space: nowrap; transition: all 0.2s; }
+.tab:hover { color: var(--purple); background: var(--purple-bg); }
+.tab.active { color: var(--gold); border-bottom: 3px solid var(--gold); margin-bottom: -3px; }
+.content { padding: 20px; max-width: 1400px; margin: 0 auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.card { background: var(--white); border-radius: 8px; padding: 16px; box-shadow: var(--shadow); text-align: center; border-top: 4px solid var(--gold); }
+.card .number { font-size: 2rem; font-weight: 700; color: var(--purple); }
+.card .label { font-size: 0.8rem; color: var(--gray); margin-top: 4px; }
+.card.filled { border-top-color: var(--green); }
+.card.unfilled { border-top-color: var(--red); }
+.card.pending { border-top-color: var(--orange); }
+.chart-container { background: var(--white); border-radius: 8px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 24px; }
+.bar-chart { display: flex; flex-direction: column; gap: 8px; }
+.bar-row { display: flex; align-items: center; gap: 8px; }
+.bar-label { width: 140px; font-size: 0.75rem; text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; height: 24px; background: #eee; border-radius: 4px; position: relative; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; display: flex; align-items: center; padding-left: 8px; font-size: 0.7rem; color: white; font-weight: 600; }
+.bar-fill.confirmed { background: var(--green); }
+.bar-fill.partial { background: var(--orange); }
+.bar-fill.pending { background: #ccc; }
+.workstream-section { background: var(--white); border-radius: 8px; margin-bottom: 16px; box-shadow: var(--shadow); overflow: hidden; }
+.workstream-header { padding: 14px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, var(--purple-bg), var(--white)); border-left: 4px solid var(--purple); }
+.workstream-header h3 { font-size: 1rem; color: var(--purple); }
+.workstream-header .meta { font-size: 0.75rem; color: var(--gray); }
+.workstream-header .toggle { font-size: 1.2rem; transition: transform 0.2s; }
+.workstream-header.collapsed .toggle { transform: rotate(-90deg); }
+.workstream-body { padding: 16px 20px; }
+.workstream-body.hidden { display: none; }
+.pending-badge { background: var(--orange); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+th { background: var(--purple); color: white; padding: 8px 10px; text-align: left; }
+td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+tr:hover { background: var(--gold-bg); }
+.status-icon { font-size: 1rem; }
+.editable { cursor: pointer; min-width: 80px; min-height: 20px; padding: 2px 4px; border-radius: 3px; }
+.editable:hover { background: #E3F2FD; outline: 1px dashed var(--purple); }
+.editable:empty::before { content: '(click to assign)'; color: #aaa; font-style: italic; }
+.btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; }
+.btn-primary { background: var(--purple); color: white; }
+.btn-primary:hover { background: var(--purple-light); }
+.btn-gold { background: var(--gold); color: white; }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-sm { padding: 4px 10px; font-size: 0.7rem; }
+.btn-outline { background: transparent; border: 1px solid var(--purple); color: var(--purple); }
+.btn-outline:hover { background: var(--purple-bg); }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-bar input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; flex: 1; max-width: 300px; }
+.filter-btn { padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: white; font-size: 0.75rem; }
+.filter-btn.active { background: var(--purple); color: white; border-color: var(--purple); }
+.timeline-container { background: var(--white); border-radius: 8px; padding: 20px; box-shadow: var(--shadow); overflow-x: auto; }
+.timeline { position: relative; min-width: 800px; }
+.timeline-header { display: flex; border-bottom: 2px solid var(--purple); padding-bottom: 4px; margin-bottom: 8px; }
+.timeline-label { width: 160px; flex-shrink: 0; }
+.timeline-hours { flex: 1; display: flex; position: relative; }
+.timeline-hour { flex: 1; text-align: center; font-size: 0.7rem; color: var(--gray); }
+.timeline-row { display: flex; align-items: center; margin-bottom: 3px; height: 20px; }
+.timeline-row-label { width: 160px; flex-shrink: 0; font-size: 0.65rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.timeline-row-bars { flex: 1; position: relative; height: 16px; }
+.timeline-bar { position: absolute; height: 14px; border-radius: 3px; top: 1px; opacity: 0.85; font-size: 0.6rem; display: flex; align-items: center; padding-left: 4px; color: white; overflow: hidden; white-space: nowrap; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 4px; color: var(--purple); font-size: 0.85rem; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+.signup-form { background: var(--white); border-radius: 8px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 24px; }
+.registered-table { background: var(--white); border-radius: 8px; padding: 20px; box-shadow: var(--shadow); }
+.gap-item { background: var(--white); border-radius: 8px; padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; border-left: 4px solid var(--orange); }
+.gap-item h4 { color: var(--purple); margin-bottom: 4px; }
+.gap-item .contact { font-size: 0.8rem; color: var(--gray); }
+.gap-item .message { background: #F5F5F5; padding: 10px; border-radius: 4px; margin-top: 8px; font-size: 0.8rem; font-family: monospace; white-space: pre-wrap; }
+.floating-bar { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, var(--purple), #2E0854); color: white; padding: 10px 24px; display: flex; justify-content: center; gap: 24px; align-items: center; font-size: 0.85rem; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); }
+.floating-bar .stat { display: flex; align-items: center; gap: 6px; }
+.floating-bar .stat .num { font-size: 1.1rem; font-weight: 700; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: white; border-radius: 8px; padding: 24px; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto; }
+.modal h3 { color: var(--purple); margin-bottom: 12px; }
+.modal .close-btn { float: right; cursor: pointer; font-size: 1.2rem; }
+.volunteer-list-item { padding: 6px 8px; cursor: pointer; border-radius: 4px; font-size: 0.85rem; }
+.volunteer-list-item:hover { background: var(--purple-bg); }
+.ws-colors { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }
+.confirm-btn { background: var(--green); color: white; border: none; padding: 2px 8px; border-radius: 3px; font-size: 0.65rem; cursor: pointer; margin-left: 4px; }
+.confirm-btn:hover { background: #1B5E20; }
+.toast { position: fixed; top: 20px; right: 20px; background: var(--green); color: white; padding: 12px 20px; border-radius: 6px; z-index: 3000; display: none; font-size: 0.85rem; box-shadow: var(--shadow); }
+.toast.show { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+@media print {
+  .tabs, .floating-bar, .filter-bar, .btn, .modal-overlay { display: none !important; }
+  .tab-content { display: block !important; page-break-inside: avoid; }
+  .header { background: white !important; color: black !important; border-bottom: 2px solid var(--purple); }
+  body { font-size: 11px; }
+}
+@media (max-width: 768px) {
+  .header { flex-direction: column; text-align: center; }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .floating-bar { flex-wrap: wrap; gap: 8px; font-size: 0.75rem; }
+}
+body { padding-bottom: 50px; }
+#tab-admin input[type="text"], #tab-admin input[type="number"], #tab-admin select { padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; }
+#tab-admin .form-group label { font-size: 0.75rem; color: var(--gray); display: block; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🎭 UDAAN Dance Competition 2026</h1>
+    <div class="subtitle">Volunteer Management Command Center | Lead: Jyothish</div>
+  </div>
+  <div class="event-info">
+    <div><strong>May 30, 2026</strong></div>
+    <div>Redmond High School PAC</div>
+    <div>Event: 3:00 PM – 8:00 PM</div>
+    <div>Setup 12:00 PM | Teardown 10:00 PM</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+  <button class="tab" onclick="switchTab('workstreams')">📋 Workstreams</button>
+  <button class="tab" onclick="switchTab('timeline')">⏱️ Timeline</button>
+  <button class="tab" onclick="switchTab('signup')">✍️ Volunteer Roster</button>
+  <button class="tab" onclick="switchTab('gaps')">⚠️ Gaps & Actions</button>
+  <button class="tab" onclick="switchTab('admin')">🔧 Admin</button>
+</div>
+
+<div class="content">
+  <!-- DASHBOARD TAB -->
+  <div id="tab-dashboard" class="tab-content active">
+    <div class="cards" id="summary-cards"></div>
+    <div class="chart-container">
+      <h3 style="margin-bottom:12px;color:var(--purple)">Fill Rate by Workstream</h3>
+      <div class="bar-chart" id="fill-chart"></div>
+    </div>
+    <div class="chart-container">
+      <h3 style="margin-bottom:12px;color:var(--purple)">Volunteer Demand Timeline</h3>
+      <div id="dashboard-timeline"></div>
+    </div>
+  </div>
+
+  <!-- WORKSTREAMS TAB -->
+  <div id="tab-workstreams" class="tab-content">
+    <div class="filter-bar">
+      <input type="text" id="search-box" placeholder="Search roles or volunteers..." oninput="filterWorkstreams()">
+      <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('confirmed',this)">Confirmed</button>
+      <button class="filter-btn" onclick="setFilter('pending',this)">Pending</button>
+      <button class="filter-btn" onclick="setFilter('unfilled',this)">Unfilled</button>
+      <button class="btn btn-gold btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+    </div>
+    <div id="workstreams-container"></div>
+  </div>
+
+  <!-- TIMELINE TAB -->
+  <div id="tab-timeline" class="tab-content">
+    <div class="timeline-container">
+      <h3 style="margin-bottom:16px;color:var(--purple)">Volunteer Timeline (12:00 PM – 10:00 PM)</h3>
+      <div id="gantt-timeline"></div>
+    </div>
+  </div>
+
+  <!-- SIGNUP TAB -->
+  <div id="tab-signup" class="tab-content">
+    <div class="signup-form">
+      <h3 style="color:var(--purple);margin-bottom:16px">Volunteer Registration</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="vol-name" required></div>
+        <div class="form-group"><label>Phone Number *</label><input type="tel" id="vol-phone"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="vol-email"></div>
+        <div class="form-group"><label>Available From *</label><input type="time" id="vol-from" value="14:00"></div>
+        <div class="form-group"><label>Available Until *</label><input type="time" id="vol-until" value="20:00"></div>
+        <div class="form-group"><label>Preferred Area</label>
+          <select id="vol-area">
+            <option value="">Any / No Preference</option>
+            <option>Facility Management</option>
+            <option>Guest Management</option>
+            <option>Auditorium Management</option>
+            <option>Backstage Management</option>
+            <option>Stage Management</option>
+            <option>Ceremonies</option>
+            <option>Tech Team</option>
+            <option>Scoring</option>
+            <option>Audience Poll</option>
+            <option>Media</option>
+            <option>Production Design</option>
+            <option>Prize Distribution</option>
+            <option>Teardown</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Restrictions / Constraints</label><input type="text" id="vol-restrictions" placeholder="e.g., teenager, can't lift heavy, must leave by 6pm"></div>
+      <div class="form-group"><label>Special Skills (hold Ctrl/Cmd to select multiple)</label>
+        <select id="vol-skills" multiple style="height:80px">
+          <option>Photography</option>
+          <option>AV Tech</option>
+          <option>First Aid</option>
+          <option>Stage Experience</option>
+          <option>Bilingual</option>
+          <option>Event Management</option>
+          <option>Social Media</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" onclick="registerVolunteer()">Register Volunteer</button>
+        <button class="btn btn-outline" onclick="copySignupLink()">📋 Copy Signup Link</button>
+      </div>
+    </div>
+    <div class="registered-table">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="color:var(--purple)">Registered Volunteers</h3>
+        <button class="btn btn-gold btn-sm" onclick="exportVolunteersCSV()">📥 Export CSV</button>
+      </div>
+      <div style="overflow-x:auto"><table id="volunteers-table">
+        <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Available</th><th>Area</th><th>Skills</th><th>Restrictions</th><th>Actions</th></tr></thead>
+        <tbody id="volunteers-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- GAPS TAB -->
+  <div id="tab-gaps" class="tab-content">
+    <h3 style="color:var(--purple);margin-bottom:16px">⚠️ Pending Confirmations & Action Items</h3>
+    <div id="gaps-container"></div>
+    <h3 style="color:var(--purple);margin:24px 0 16px">❌ Unfilled Confirmed Positions</h3>
+    <div id="unfilled-container"></div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div id="tab-admin" class="tab-content">
+    <h3 style="color:var(--purple);margin-bottom:16px">🔧 Admin Panel — Manage Workstreams & Roles</h3>
+    
+    <!-- Add New Workstream -->
+    <div class="chart-container" style="margin-bottom:20px">
+      <h4 style="margin-bottom:12px;color:var(--gold)">➕ Add New Workstream</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end">
+        <div class="form-group"><label>Name</label><input type="text" id="admin-ws-name" placeholder="e.g. Food Service"></div>
+        <div class="form-group"><label>Lead</label><input type="text" id="admin-ws-lead" placeholder="Lead name"></div>
+        <div class="form-group"><label>Contact</label><input type="text" id="admin-ws-contact" placeholder="Phone/email"></div>
+        <button class="btn btn-primary" onclick="addWorkstream()">Add Workstream</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:8px">
+        <div class="form-group"><label>Time Range</label><input type="text" id="admin-ws-time" placeholder="e.g. 2:00 PM - 8:00 PM"></div>
+        <div class="form-group"><label>Status</label><select id="admin-ws-confirmed"><option value="true">Confirmed</option><option value="false">Pending (estimated)</option></select></div>
+        <div></div>
+      </div>
+    </div>
+
+    <!-- Workstream Editor -->
+    <div class="chart-container">
+      <h4 style="margin-bottom:12px;color:var(--gold)">✏️ Edit Workstreams & Roles</h4>
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Select Workstream:</label>
+        <select id="admin-ws-select" onchange="renderAdminWorkstream()" style="width:100%;padding:8px;border-radius:4px;border:1px solid #ddd">
+        </select>
+      </div>
+      
+      <!-- Workstream details editor -->
+      <div id="admin-ws-details" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px;padding:12px;background:var(--purple-bg);border-radius:6px">
+          <div class="form-group"><label>Name</label><input type="text" id="admin-edit-name"></div>
+          <div class="form-group"><label>Lead</label><input type="text" id="admin-edit-lead"></div>
+          <div class="form-group"><label>Contact</label><input type="text" id="admin-edit-contact"></div>
+          <div class="form-group"><label>Time</label><input type="text" id="admin-edit-time"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-primary btn-sm" onclick="saveWorkstreamEdits()">💾 Save Changes</button>
+          <button class="btn btn-sm" style="background:var(--green);color:white" onclick="markWorkstreamConfirmed()">✅ Mark as Confirmed</button>
+          <button class="btn btn-sm" style="background:var(--red);color:white" onclick="deleteWorkstream()">🗑️ Delete Workstream</button>
+        </div>
+
+        <!-- Roles Table -->
+        <h5 style="margin-bottom:8px;color:var(--purple)">Roles in this workstream:</h5>
+        <div style="overflow-x:auto">
+          <table id="admin-roles-table" style="width:100%;border-collapse:collapse;font-size:0.85rem">
+            <thead><tr style="background:var(--gold-bg)">
+              <th style="padding:8px;text-align:left;border-bottom:2px solid var(--gold)">Role</th>
+              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--gold);width:60px">Count</th>
+              <th style="padding:8px;text-align:left;border-bottom:2px solid var(--gold);width:150px">Time Slot</th>
+              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--gold);width:70px">Start Hr</th>
+              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--gold);width:70px">End Hr</th>
+              <th style="padding:8px;text-align:left;border-bottom:2px solid var(--gold)">Notes</th>
+              <th style="padding:8px;text-align:center;border-bottom:2px solid var(--gold);width:80px">Actions</th>
+            </tr></thead>
+            <tbody id="admin-roles-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Add New Role -->
+        <div style="margin-top:16px;padding:12px;background:#f5f5f5;border-radius:6px">
+          <h5 style="margin-bottom:8px;color:var(--gold)">➕ Add New Role</h5>
+          <div style="display:grid;grid-template-columns:2fr 60px 1fr 70px 70px 2fr auto;gap:8px;align-items:end">
+            <div class="form-group"><label>Role Name</label><input type="text" id="admin-new-role" placeholder="e.g. Door Greeter"></div>
+            <div class="form-group"><label>Count</label><input type="number" id="admin-new-count" value="1" min="1" style="width:50px"></div>
+            <div class="form-group"><label>Time Display</label><input type="text" id="admin-new-time" placeholder="2:00-5:00 PM"></div>
+            <div class="form-group"><label>Start</label><input type="number" id="admin-new-start" step="0.25" min="8" max="23" placeholder="14"></div>
+            <div class="form-group"><label>End</label><input type="number" id="admin-new-end" step="0.25" min="8" max="23" placeholder="17"></div>
+            <div class="form-group"><label>Notes</label><input type="text" id="admin-new-notes" placeholder="Any notes..."></div>
+            <button class="btn btn-primary btn-sm" onclick="addRole()">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Operations -->
+    <div class="chart-container" style="margin-top:20px">
+      <h4 style="margin-bottom:12px;color:var(--gold)">📦 Data Management</h4>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="exportAllData()">📥 Export All Data (JSON)</button>
+        <button class="btn btn-sm" style="background:var(--gold);color:white" onclick="document.getElementById('import-file').click()">📤 Import Data (JSON)</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+        <button class="btn btn-sm" style="background:var(--red);color:white" onclick="resetAllData()">🔄 Reset All (Factory Default)</button>
+      </div>
+      <p style="margin-top:8px;font-size:0.75rem;color:var(--gray)">Export saves all workstreams, roles, assignments, and volunteer signups. Import restores from a previous export.</p>
+    </div>
+  </div>
+</div>
+
+<div class="floating-bar" id="floating-bar"></div>
+
+<div class="modal-overlay" id="assign-modal">
+  <div class="modal">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h3>Assign Volunteer</h3>
+    <p id="modal-role" style="font-size:0.85rem;color:var(--gray);margin-bottom:12px"></p>
+    <div class="form-group"><label>Type a name:</label><input type="text" id="modal-name-input" placeholder="Volunteer name"></div>
+    <button class="btn btn-primary btn-sm" onclick="assignFromModal()">Assign</button>
+    <div id="modal-registered" style="margin-top:12px;max-height:200px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WORKSTREAMS = [
+  { id:'facility', name:'Facility Management', lead:'Seema', contact:'812-390-2374', time:'12:00 PM - 10:00 PM', confirmed:true, roles:[
+    {role:'Audience Entry',count:2,time:'2:00-8:00 PM',start:14,end:20,assigned:'',notes:''},
+    {role:'Audience Check-in',count:2,time:'2:00-5:00 PM',start:14,end:17,assigned:'',notes:''},
+    {role:'Participant Entry',count:2,time:'12:00-4:00 PM',start:12,end:16,assigned:'',notes:''},
+    {role:'Help Desk',count:1,time:'2:00-8:00 PM',start:14,end:20,assigned:'',notes:''},
+    {role:'Lobby Floaters',count:2,time:'2:00-8:00 PM',start:14,end:20,assigned:'',notes:''},
+    {role:'Photo Booth',count:2,time:'2:00-8:00 PM',start:14,end:20,assigned:'',notes:'Will there be a photographer?'},
+    {role:'Food Area',count:2,time:'2:00-8:30 PM',start:14,end:20.5,assigned:'',notes:'Table cover needed'},
+    {role:'Auditorium Entry',count:2,time:'2:30-8:00 PM',start:14.5,end:20,assigned:'',notes:''},
+    {role:'Parking',count:2,time:'1:00-4:00 PM',start:13,end:16,assigned:'',notes:'Reserved signage needed'}
+  ]},
+  { id:'guest', name:'Guest Management', lead:'Tuni Mathew', contact:'(862) 324-3844', time:'1:30 PM - 8:00 PM', confirmed:true, roles:[
+    {role:'Participants Check-in (Early)',count:2,time:'1:30-3:45 PM',start:13.5,end:15.75,assigned:'',notes:'Re-use for general check-in later'},
+    {role:'General Guests Check-in',count:3,time:'2:00-3:30 PM',start:14,end:15.5,assigned:'',notes:''},
+    {role:'Premium Guests Check-in',count:2,time:'2:00-3:30 PM',start:14,end:15.5,assigned:'',notes:''},
+    {role:'Help Desk',count:1,time:'2:00-8:00 PM',start:14,end:20,assigned:'',notes:''},
+    {role:'Crowd Manager / Usher',count:6,time:'2:30-8:00 PM',start:14.5,end:20,assigned:'',notes:''}
+  ]},
+  { id:'auditorium', name:'Auditorium Management', lead:'Prema', contact:'425-877-5392', time:'2:00 PM - 8:30 PM', confirmed:false, roles:[
+    {role:'Seating Usher',count:3,time:'2:30-8:00 PM',start:14.5,end:20,assigned:'',notes:'ESTIMATED - needs confirmation'},
+    {role:'Reserved Section Guard',count:1,time:'2:30-8:00 PM',start:14.5,end:20,assigned:'',notes:'ESTIMATED'},
+    {role:'Audience Flow',count:2,time:'2:30-8:00 PM',start:14.5,end:20,assigned:'',notes:'Nithin leading this area'}
+  ]},
+  { id:'backstage', name:'Backstage Management', lead:'Saira', contact:'(425) 623-4001', time:'12:00 PM - 8:30 PM', confirmed:false, roles:[
+    {role:'Team Lineup Coordinator',count:2,time:'2:00-7:00 PM',start:14,end:19,assigned:'',notes:'ESTIMATED'},
+    {role:'Green Room Monitor',count:2,time:'2:00-7:00 PM',start:14,end:19,assigned:'',notes:'Male + female areas'},
+    {role:'Quick Change Area',count:1,time:'3:00-7:00 PM',start:15,end:19,assigned:'',notes:'ESTIMATED'}
+  ]},
+  { id:'stage', name:'Stage Management', lead:'Rohit', contact:'(425) 419-7539', time:'12:00 PM - 8:30 PM', confirmed:false, roles:[
+    {role:'Stage Hand',count:2,time:'3:00-8:00 PM',start:15,end:20,assigned:'',notes:'ESTIMATED'},
+    {role:'Props/Set Change',count:2,time:'3:00-8:00 PM',start:15,end:20,assigned:'',notes:'ESTIMATED'}
+  ]},
+  { id:'ceremonies', name:'Ceremonies', lead:'Ashitha', contact:'(602) 384-6214', time:'3:00 PM - 8:15 PM', confirmed:true, roles:[
+    {role:'Divyaa Unni Assist (Female)',count:1,time:'2:30-4:00 PM',start:14.5,end:16,assigned:'',notes:'Must be female adult'},
+    {role:'Chief Guest Usher (Teenage girl)',count:1,time:'3:00-3:40 PM',start:15,end:15.67,assigned:'',notes:'Escort to/from stage'},
+    {role:'Judge Usher - Chavi',count:1,time:'3:30-3:45 PM & 7:25-7:28 PM',start:15.5,end:19.47,assigned:'',notes:'Adult'},
+    {role:'Judge Usher - Treena',count:1,time:'3:30-3:45 PM & 7:25-7:28 PM',start:15.5,end:19.47,assigned:'',notes:'Adult'},
+    {role:'Judge Usher - Divyaa (post costume)',count:1,time:'3:37-3:45 PM',start:15.62,end:15.75,assigned:'',notes:'Escort from green room'},
+    {role:'Platinum Sponsor Usher',count:1,time:'7:25-7:28 PM',start:19.42,end:19.47,assigned:'',notes:''},
+    {role:'Award Stage Help',count:2,time:'7:28-8:00 PM',start:19.47,end:20,assigned:'',notes:'Identify tokens/awards, handover'},
+    {role:'Open Stage Management',count:2,time:'8:00-8:15 PM',start:20,end:20.25,assigned:'',notes:'Manage curtain call / team photos'}
+  ]},
+  { id:'tech', name:'Tech Team', lead:'Mithun', contact:'(425) 623-0872', time:'11:00 AM - 9:00 PM', confirmed:true, roles:[
+    {role:'LED Lead',count:1,time:'Full day',start:11,end:21,assigned:'Ajith Kotharamath',notes:'✅ Assigned'},
+    {role:'Photo & Video Lead',count:1,time:'Full day',start:11,end:21,assigned:'Roopesh Kelambeth',notes:'✅ Assigned'},
+    {role:'Content Lead',count:1,time:'Full day',start:11,end:21,assigned:'Shibu Baby',notes:'✅ Assigned'},
+    {role:'DOL (Director of Lighting)',count:1,time:'Full day',start:11,end:21,assigned:'Sabitha Brijesh',notes:'✅ Assigned'},
+    {role:'Media Volunteers',count:3,time:'Full day',start:11,end:21,assigned:'',notes:'See Media tab'}
+  ]},
+  { id:'scoring', name:'Scoring', lead:'Sini', contact:'(425) 516-2596', time:'3:45 PM - 7:30 PM', confirmed:true, roles:[
+    {role:'Score Sheet Runner',count:1,time:'3:45-7:00 PM',start:15.75,end:19,assigned:'',notes:'Collect from judges'},
+    {role:'Tab Operator',count:1,time:'3:45-7:00 PM',start:15.75,end:19,assigned:'',notes:'Google sheet entry'},
+    {role:'Mic Coordinator for Judges',count:1,time:'3:45-7:00 PM',start:15.75,end:19,assigned:'',notes:''}
+  ]},
+  { id:'poll', name:'Audience Poll', lead:'Neetha', contact:'(401) 636-8380', time:'7:00 PM - 7:15 PM', confirmed:false, roles:[
+    {role:'Poll System Support',count:2,time:'6:45-7:20 PM',start:18.75,end:19.33,assigned:'',notes:'ESTIMATED'}
+  ]},
+  { id:'media', name:'Media', lead:'Roopesh', contact:'(425) 516-2595', time:'2:00 PM - 8:30 PM', confirmed:false, roles:[
+    {role:'Still Photographer',count:2,time:'2:30-8:30 PM',start:14.5,end:20.5,assigned:'',notes:'ESTIMATED'},
+    {role:'Videographer',count:2,time:'2:30-8:30 PM',start:14.5,end:20.5,assigned:'',notes:'ESTIMATED'},
+    {role:'Reels / Social Media',count:1,time:'2:30-8:30 PM',start:14.5,end:20.5,assigned:'',notes:'ESTIMATED'}
+  ]},
+  { id:'production', name:'Production Design', lead:'Manju Jyothis', contact:'425-246-1594', time:'10:00 AM - 3:00 PM + 8:00-10:00 PM', confirmed:false, roles:[
+    {role:'Setup Crew',count:4,time:'10:00 AM-2:00 PM',start:10,end:14,assigned:'',notes:'ESTIMATED - stage, lobby, photo booth'},
+    {role:'Teardown Crew',count:3,time:'8:00-10:00 PM',start:20,end:22,assigned:'',notes:'ESTIMATED'}
+  ]},
+  { id:'prize', name:'Prize Distribution', lead:'Manjima', contact:'(425) 535-8535', time:'7:00 PM - 8:00 PM', confirmed:false, roles:[
+    {role:'Trophy Display Setup',count:2,time:'6:30-7:15 PM',start:18.5,end:19.25,assigned:'',notes:'Move from lobby to backstage'},
+    {role:'Award Handover Assistant',count:2,time:'7:28-8:00 PM',start:19.47,end:20,assigned:'',notes:'Stage support'}
+  ]},
+  { id:'teardown', name:'Teardown', lead:'Sujith', contact:'(425) 628-1079', time:'8:15 PM - 10:00 PM', confirmed:false, roles:[
+    {role:'General Cleanup Crew',count:6,time:'8:15-10:00 PM',start:20.25,end:22,assigned:'',notes:'ESTIMATED'},
+    {role:'Equipment Packing',count:2,time:'8:15-10:00 PM',start:20.25,end:22,assigned:'',notes:'Help tech team'}
+  ]}
+];
+
+const WS_COLORS = ['#4B0082','#B8860B','#2E7D32','#C62828','#1565C0','#F57C00','#6A1B9A','#00695C','#AD1457','#37474F','#E65100','#1B5E20','#4E342E','#283593'];
+
+let currentFilter = 'all';
+let assignTarget = null;
+
+function loadData() {
+  const saved = localStorage.getItem('udaan2026_assignments');
+  if (saved) {
+    const data = JSON.parse(saved);
+    data.forEach(d => {
+      const ws = WORKSTREAMS.find(w => w.id === d.wsId);
+      if (ws) {
+        const role = ws.roles.find(r => r.role === d.role);
+        if (role) { role.assigned = d.assigned; if(d.confirmed !== undefined) role.forceConfirmed = d.confirmed; }
+      }
+    });
+  }
+}
+
+function saveData() {
+  const data = [];
+  WORKSTREAMS.forEach(ws => {
+    ws.roles.forEach(r => {
+      if (r.assigned || r.forceConfirmed) data.push({wsId:ws.id, role:r.role, assigned:r.assigned, confirmed:r.forceConfirmed});
+    });
+  });
+  localStorage.setItem('udaan2026_assignments', JSON.stringify(data));
+}
+
+function getVolunteers() { return JSON.parse(localStorage.getItem('udaan2026_volunteers') || '[]'); }
+function saveVolunteers(v) { localStorage.setItem('udaan2026_volunteers', JSON.stringify(v)); }
+
+function getStats() {
+  let total=0, filled=0, unfilled=0, pending=0;
+  WORKSTREAMS.forEach(ws => {
+    ws.roles.forEach(r => {
+      total += r.count;
+      if (r.assigned) { filled += r.count; }
+      else if (!ws.confirmed && !r.forceConfirmed) { pending += r.count; }
+      else { unfilled += r.count; }
+    });
+  });
+  return {total, filled, unfilled, pending};
+}
+
+function renderDashboard() {
+  const s = getStats();
+  document.getElementById('summary-cards').innerHTML = `
+    <div class="card"><div class="number">${s.total}</div><div class="label">Total Positions</div></div>
+    <div class="card filled"><div class="number">${s.filled}</div><div class="label">Filled</div></div>
+    <div class="card unfilled"><div class="number">${s.unfilled}</div><div class="label">Unfilled (Confirmed)</div></div>
+    <div class="card pending"><div class="number">${s.pending}</div><div class="label">Pending (Unconfirmed)</div></div>
+  `;
+  let chartHTML = '';
+  WORKSTREAMS.forEach((ws, i) => {
+    let wsTotal=0, wsFilled=0;
+    ws.roles.forEach(r => { wsTotal += r.count; if(r.assigned) wsFilled += r.count; });
+    const pct = wsTotal ? Math.round(wsFilled/wsTotal*100) : 0;
+    const cls = pct === 100 ? 'confirmed' : pct > 0 ? 'partial' : 'pending';
+    chartHTML += `<div class="bar-row"><div class="bar-label">${ws.name}</div><div class="bar-track"><div class="bar-fill ${cls}" style="width:${Math.max(pct,2)}%">${wsFilled}/${wsTotal}</div></div></div>`;
+  });
+  document.getElementById('fill-chart').innerHTML = chartHTML;
+  renderDemandTimeline();
+}
+
+function renderDemandTimeline() {
+  const hours = [];
+  for(let h=12;h<=22;h++) hours.push(h);
+  const demand = hours.map(()=>0);
+  WORKSTREAMS.forEach(ws => ws.roles.forEach(r => {
+    hours.forEach((h,i) => { if(r.start <= h && r.end > h) demand[i] += r.count; });
+  }));
+  const max = Math.max(...demand);
+  let html = '<div style="display:flex;align-items:flex-end;height:120px;gap:4px;padding:10px 0">';
+  hours.forEach((h,i) => {
+    const pct = max ? (demand[i]/max*100) : 0;
+    const label = h > 12 ? (h-12)+' PM' : h === 12 ? '12 PM' : h+' AM';
+    html += `<div style="flex:1;display:flex;flex-direction:column;align-items:center"><div style="width:100%;background:linear-gradient(var(--gold),var(--purple));height:${pct}%;border-radius:3px 3px 0 0;min-height:2px" title="${demand[i]} volunteers needed"></div><div style="font-size:0.6rem;margin-top:4px;color:var(--gray)">${label}</div><div style="font-size:0.65rem;font-weight:600">${demand[i]}</div></div>`;
+  });
+  html += '</div>';
+  document.getElementById('dashboard-timeline').innerHTML = html;
+}
+
+function getRoleStatus(ws, role) {
+  if (role.assigned) return '✅';
+  if (!ws.confirmed && !role.forceConfirmed) return '❓';
+  return '❌';
+}
+
+function renderWorkstreams() {
+  let html = '';
+  WORKSTREAMS.forEach((ws, wi) => {
+    const pendingBadge = !ws.confirmed ? '<span class="pending-badge">⚠️ PENDING</span>' : '';
+    let wsTotal=0, wsFilled=0;
+    ws.roles.forEach(r => { wsTotal += r.count; if(r.assigned) wsFilled += r.count; });
+    html += `<div class="workstream-section" data-ws="${ws.id}" data-confirmed="${ws.confirmed}">
+      <div class="workstream-header" onclick="toggleWS(this)">
+        <div><h3><span class="ws-colors" style="background:${WS_COLORS[wi]}"></span>${ws.name} ${pendingBadge}</h3><div class="meta">Lead: ${ws.lead} | ${ws.contact} | ${ws.time} | ${wsFilled}/${wsTotal} filled</div></div>
+        <span class="toggle">▼</span>
+      </div>
+      <div class="workstream-body">
+        <table><thead><tr><th>Status</th><th>Role</th><th>Count</th><th>Time</th><th>Assigned</th><th>Notes</th><th>Actions</th></tr></thead><tbody>`;
+    ws.roles.forEach((r, ri) => {
+      const status = getRoleStatus(ws, r);
+      const showRow = currentFilter === 'all' || 
+        (currentFilter === 'confirmed' && (ws.confirmed || r.forceConfirmed)) ||
+        (currentFilter === 'pending' && !ws.confirmed && !r.forceConfirmed) ||
+        (currentFilter === 'unfilled' && !r.assigned && (ws.confirmed || r.forceConfirmed));
+      html += `<tr data-role="${r.role.toLowerCase()}" style="display:${showRow?'':'none'}">
+        <td class="status-icon">${status}</td>
+        <td>${r.role}</td><td>${r.count}</td><td>${r.time}</td>
+        <td><span class="editable" onclick="openAssignModal('${ws.id}',${ri})">${r.assigned||''}</span></td>
+        <td style="font-size:0.75rem;color:var(--gray)">${r.notes}</td>
+        <td>${!ws.confirmed && !r.forceConfirmed ? `<button class="confirm-btn" onclick="confirmRole('${ws.id}',${ri})">✓ Confirm</button>`:''}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div></div>';
+  });
+  document.getElementById('workstreams-container').innerHTML = html;
+}
+
+function toggleWS(el) {
+  el.classList.toggle('collapsed');
+  el.nextElementSibling.classList.toggle('hidden');
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderWorkstreams();
+}
+
+function filterWorkstreams() {
+  const q = document.getElementById('search-box').value.toLowerCase();
+  document.querySelectorAll('#workstreams-container tr[data-role]').forEach(tr => {
+    const match = tr.dataset.role.includes(q) || tr.textContent.toLowerCase().includes(q);
+    tr.style.display = match ? '' : 'none';
+  });
+}
+
+function openAssignModal(wsId, ri) {
+  assignTarget = {wsId, ri};
+  const ws = WORKSTREAMS.find(w=>w.id===wsId);
+  const role = ws.roles[ri];
+  document.getElementById('modal-role').textContent = `${ws.name} → ${role.role} (${role.time})`;
+  document.getElementById('modal-name-input').value = role.assigned || '';
+  const vols = getVolunteers();
+  let listHTML = '<div style="margin-top:8px;font-size:0.8rem;color:var(--gray)">Registered volunteers:</div>';
+  vols.forEach(v => { listHTML += `<div class="volunteer-list-item" onclick="document.getElementById('modal-name-input').value='${v.name}'">${v.name} (${v.from}-${v.until}, ${v.area||'Any'})</div>`; });
+  document.getElementById('modal-registered').innerHTML = listHTML;
+  document.getElementById('assign-modal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('assign-modal').classList.remove('show'); }
+
+function assignFromModal() {
+  const name = document.getElementById('modal-name-input').value.trim();
+  if (!assignTarget) return;
+  const ws = WORKSTREAMS.find(w=>w.id===assignTarget.wsId);
+  ws.roles[assignTarget.ri].assigned = name;
+  saveData(); renderAll(); closeModal(); showToast(name ? `Assigned: ${name}` : 'Assignment cleared');
+}
+
+function confirmRole(wsId, ri) {
+  const ws = WORKSTREAMS.find(w=>w.id===wsId);
+  ws.roles[ri].forceConfirmed = true;
+  saveData(); renderAll(); showToast('Role confirmed!');
+}
+
+function renderTimeline() {
+  const startH = 10, endH = 22;
+  const totalH = endH - startH;
+  let html = '<div class="timeline"><div class="timeline-header"><div class="timeline-label" style="font-weight:600;font-size:0.75rem">Role</div><div class="timeline-hours">';
+  for(let h=startH;h<=endH;h++) { const l=h>12?(h-12)+'PM':h===12?'12PM':h+'AM'; html+=`<div class="timeline-hour">${l}</div>`; }
+  html += '</div></div>';
+  WORKSTREAMS.forEach((ws, wi) => {
+    ws.roles.forEach(r => {
+      const left = ((r.start-startH)/totalH*100);
+      const width = ((r.end-r.start)/totalH*100);
+      html += `<div class="timeline-row"><div class="timeline-row-label" title="${ws.name}: ${r.role}">${r.role}</div><div class="timeline-row-bars"><div class="timeline-bar" style="left:${left}%;width:${width}%;background:${WS_COLORS[wi]}" title="${ws.name}: ${r.role} (×${r.count})">${r.count}</div></div></div>`;
+    });
+  });
+  html += '</div>';
+  document.getElementById('gantt-timeline').innerHTML = html;
+}
+
+function renderSignup() {
+  const vols = getVolunteers();
+  let html = '';
+  vols.forEach((v,i) => {
+    html += `<tr><td>${v.name}</td><td>${v.phone}</td><td>${v.email}</td><td>${v.from}-${v.until}</td><td>${v.area||'Any'}</td><td>${(v.skills||[]).join(', ')}</td><td>${v.restrictions||''}</td><td><button class="btn btn-sm btn-outline" onclick="removeVolunteer(${i})">✕</button></td></tr>`;
+  });
+  document.getElementById('volunteers-tbody').innerHTML = html || '<tr><td colspan="8" style="text-align:center;color:var(--gray)">No volunteers registered yet</td></tr>';
+}
+
+function registerVolunteer() {
+  const name = document.getElementById('vol-name').value.trim();
+  if (!name) { showToast('Name is required!'); return; }
+  const vol = {
+    name, phone: document.getElementById('vol-phone').value,
+    email: document.getElementById('vol-email').value,
+    from: document.getElementById('vol-from').value,
+    until: document.getElementById('vol-until').value,
+    area: document.getElementById('vol-area').value,
+    restrictions: document.getElementById('vol-restrictions').value,
+    skills: Array.from(document.getElementById('vol-skills').selectedOptions).map(o=>o.value)
+  };
+  const vols = getVolunteers(); vols.push(vol); saveVolunteers(vols);
+  document.getElementById('vol-name').value=''; document.getElementById('vol-phone').value='';
+  document.getElementById('vol-email').value=''; document.getElementById('vol-restrictions').value='';
+  renderSignup(); showToast(`${name} registered!`);
+}
+
+function removeVolunteer(i) { const v=getVolunteers(); v.splice(i,1); saveVolunteers(v); renderSignup(); }
+
+function copySignupLink() { navigator.clipboard.writeText(window.location.href).then(()=>showToast('Link copied!')); }
+
+function renderGaps() {
+  const pending = WORKSTREAMS.filter(ws => !ws.confirmed);
+  let html = '';
+  pending.forEach(ws => {
+    const msg = `Hi ${ws.lead},\n\nThis is Jyothish from UDAAN 2026 volunteer coordination. Could you please share the detailed volunteer requirements for ${ws.name}?\n\nSpecifically, I need:\n- Number of volunteers needed\n- Specific roles/positions\n- Time slots for each role\n- Any special requirements\n\nEvent Date: May 30, 2026\nVenue: Redmond High School PAC\n\nPlease share by [DATE] so we can begin recruitment. Thank you!\n\n- Jyothish`;
+    html += `<div class="gap-item"><h4>⚠️ ${ws.name}</h4><div class="contact">Lead: ${ws.lead} | Contact: ${ws.contact}</div><div class="message">${msg}</div><button class="btn btn-gold btn-sm" style="margin-top:8px" onclick="copyMessage(this)">📋 Copy Reminder Message</button></div>`;
+  });
+  document.getElementById('gaps-container').innerHTML = html || '<p style="color:var(--green)">✅ All workstream leads have confirmed their requirements!</p>';
+
+  let uhtml = '';
+  WORKSTREAMS.forEach(ws => {
+    if (!ws.confirmed) return;
+    ws.roles.forEach(r => {
+      if (!r.assigned) uhtml += `<div style="padding:6px 12px;border-bottom:1px solid #eee;font-size:0.85rem"><strong>${ws.name}</strong> → ${r.role} (×${r.count}) | ${r.time}</div>`;
+    });
+  });
+  document.getElementById('unfilled-container').innerHTML = uhtml || '<p style="color:var(--green)">✅ All confirmed positions are filled!</p>';
+}
+
+function copyMessage(btn) {
+  const msg = btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(msg).then(()=>showToast('Message copied to clipboard!'));
+}
+
+function renderFloatingBar() {
+  const s = getStats();
+  document.getElementById('floating-bar').innerHTML = `
+    <div class="stat"><span class="num" style="color:#4CAF50">${s.filled}</span> Filled</div>
+    <div class="stat"><span class="num" style="color:#FF9800">${s.unfilled}</span> Confirmed Needed</div>
+    <div class="stat"><span class="num" style="color:#aaa">${s.pending}</span> Estimated Pending</div>
+    <div class="stat"><span class="num" style="color:white">${s.total}</span> Total</div>
+  `;
+}
+
+function exportCSV() {
+  let csv = 'Workstream,Lead,Contact,Role,Count,Time,Assigned,Status,Notes\n';
+  WORKSTREAMS.forEach(ws => {
+    ws.roles.forEach(r => {
+      const status = r.assigned ? 'Filled' : (!ws.confirmed && !r.forceConfirmed ? 'Pending' : 'Unfilled');
+      csv += `"${ws.name}","${ws.lead}","${ws.contact}","${r.role}",${r.count},"${r.time}","${r.assigned}","${status}","${r.notes}"\n`;
+    });
+  });
+  downloadCSV(csv, 'udaan2026_volunteer_roster.csv');
+}
+
+function exportVolunteersCSV() {
+  const vols = getVolunteers();
+  let csv = 'Name,Phone,Email,Available From,Available Until,Preferred Area,Skills,Restrictions\n';
+  vols.forEach(v => { csv += `"${v.name}","${v.phone}","${v.email}","${v.from}","${v.until}","${v.area}","${(v.skills||[]).join(';')}","${v.restrictions}"\n`; });
+  downloadCSV(csv, 'udaan2026_volunteers.csv');
+}
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = filename; a.click();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  event.target.classList.add('active');
+  if(tab==='timeline') renderTimeline();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+function renderAll() { renderDashboard(); renderWorkstreams(); renderSignup(); renderGaps(); renderFloatingBar(); renderAdminSelect(); }
+
+// ===== ADMIN FUNCTIONS =====
+function renderAdminSelect() {
+  const sel = document.getElementById('admin-ws-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Select a workstream --</option>' + 
+    WORKSTREAMS.map((ws,i) => `<option value="${i}">${ws.name} (${ws.lead})</option>`).join('');
+}
+
+function renderAdminWorkstream() {
+  const sel = document.getElementById('admin-ws-select');
+  const idx = sel.value;
+  const details = document.getElementById('admin-ws-details');
+  if (idx === '') { details.style.display = 'none'; return; }
+  details.style.display = 'block';
+  const ws = WORKSTREAMS[idx];
+  document.getElementById('admin-edit-name').value = ws.name;
+  document.getElementById('admin-edit-lead').value = ws.lead;
+  document.getElementById('admin-edit-contact').value = ws.contact;
+  document.getElementById('admin-edit-time').value = ws.time;
+  renderAdminRoles(parseInt(idx));
+}
+
+function renderAdminRoles(wsIdx) {
+  const ws = WORKSTREAMS[wsIdx];
+  const tbody = document.getElementById('admin-roles-body');
+  tbody.innerHTML = ws.roles.map((r, ri) => `
+    <tr style="border-bottom:1px solid #eee">
+      <td style="padding:6px 8px"><input type="text" value="${r.role}" onchange="updateRole(${wsIdx},${ri},'role',this.value)" style="width:100%;border:1px solid #ddd;padding:4px;border-radius:3px"></td>
+      <td style="padding:6px 8px;text-align:center"><input type="number" value="${r.count}" min="1" onchange="updateRole(${wsIdx},${ri},'count',parseInt(this.value))" style="width:45px;border:1px solid #ddd;padding:4px;border-radius:3px;text-align:center"></td>
+      <td style="padding:6px 8px"><input type="text" value="${r.time}" onchange="updateRole(${wsIdx},${ri},'time',this.value)" style="width:100%;border:1px solid #ddd;padding:4px;border-radius:3px"></td>
+      <td style="padding:6px 8px;text-align:center"><input type="number" value="${r.start}" step="0.25" onchange="updateRole(${wsIdx},${ri},'start',parseFloat(this.value))" style="width:55px;border:1px solid #ddd;padding:4px;border-radius:3px;text-align:center"></td>
+      <td style="padding:6px 8px;text-align:center"><input type="number" value="${r.end}" step="0.25" onchange="updateRole(${wsIdx},${ri},'end',parseFloat(this.value))" style="width:55px;border:1px solid #ddd;padding:4px;border-radius:3px;text-align:center"></td>
+      <td style="padding:6px 8px"><input type="text" value="${r.notes}" onchange="updateRole(${wsIdx},${ri},'notes',this.value)" style="width:100%;border:1px solid #ddd;padding:4px;border-radius:3px"></td>
+      <td style="padding:6px 8px;text-align:center"><button onclick="deleteRole(${wsIdx},${ri})" style="background:var(--red);color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:0.75rem">🗑️</button></td>
+    </tr>
+  `).join('');
+}
+
+function updateRole(wsIdx, roleIdx, field, value) {
+  WORKSTREAMS[wsIdx].roles[roleIdx][field] = value;
+  saveAdminData();
+  showToast('Role updated');
+}
+
+function deleteRole(wsIdx, roleIdx) {
+  if (!confirm('Delete this role?')) return;
+  WORKSTREAMS[wsIdx].roles.splice(roleIdx, 1);
+  saveAdminData();
+  renderAdminRoles(wsIdx);
+  renderAll();
+  showToast('Role deleted');
+}
+
+function addRole() {
+  const wsIdx = parseInt(document.getElementById('admin-ws-select').value);
+  if (isNaN(wsIdx)) { showToast('Select a workstream first'); return; }
+  const role = document.getElementById('admin-new-role').value.trim();
+  if (!role) { showToast('Enter a role name'); return; }
+  WORKSTREAMS[wsIdx].roles.push({
+    role: role,
+    count: parseInt(document.getElementById('admin-new-count').value) || 1,
+    time: document.getElementById('admin-new-time').value || 'TBD',
+    start: parseFloat(document.getElementById('admin-new-start').value) || 14,
+    end: parseFloat(document.getElementById('admin-new-end').value) || 18,
+    assigned: '',
+    notes: document.getElementById('admin-new-notes').value || ''
+  });
+  saveAdminData();
+  renderAdminRoles(wsIdx);
+  renderAll();
+  document.getElementById('admin-new-role').value = '';
+  document.getElementById('admin-new-notes').value = '';
+  showToast('Role added!');
+}
+
+function saveWorkstreamEdits() {
+  const wsIdx = parseInt(document.getElementById('admin-ws-select').value);
+  if (isNaN(wsIdx)) return;
+  WORKSTREAMS[wsIdx].name = document.getElementById('admin-edit-name').value;
+  WORKSTREAMS[wsIdx].lead = document.getElementById('admin-edit-lead').value;
+  WORKSTREAMS[wsIdx].contact = document.getElementById('admin-edit-contact').value;
+  WORKSTREAMS[wsIdx].time = document.getElementById('admin-edit-time').value;
+  saveAdminData();
+  renderAdminSelect();
+  document.getElementById('admin-ws-select').value = wsIdx;
+  renderAll();
+  showToast('Workstream updated!');
+}
+
+function markWorkstreamConfirmed() {
+  const wsIdx = parseInt(document.getElementById('admin-ws-select').value);
+  if (isNaN(wsIdx)) return;
+  WORKSTREAMS[wsIdx].confirmed = true;
+  WORKSTREAMS[wsIdx].roles.forEach(r => { r.forceConfirmed = true; r.notes = r.notes.replace(/ESTIMATED\s*-?\s*/gi,''); });
+  saveAdminData();
+  renderAll();
+  showToast('Workstream marked as confirmed!');
+}
+
+function deleteWorkstream() {
+  const wsIdx = parseInt(document.getElementById('admin-ws-select').value);
+  if (isNaN(wsIdx)) return;
+  if (!confirm(`Delete "${WORKSTREAMS[wsIdx].name}"? This cannot be undone.`)) return;
+  WORKSTREAMS.splice(wsIdx, 1);
+  saveAdminData();
+  document.getElementById('admin-ws-select').value = '';
+  document.getElementById('admin-ws-details').style.display = 'none';
+  renderAll();
+  showToast('Workstream deleted');
+}
+
+function addWorkstream() {
+  const name = document.getElementById('admin-ws-name').value.trim();
+  const lead = document.getElementById('admin-ws-lead').value.trim();
+  if (!name) { showToast('Enter a workstream name'); return; }
+  WORKSTREAMS.push({
+    id: name.toLowerCase().replace(/\s+/g,'_'),
+    name: name,
+    lead: lead || 'TBD',
+    contact: document.getElementById('admin-ws-contact').value || '',
+    time: document.getElementById('admin-ws-time').value || 'TBD',
+    confirmed: document.getElementById('admin-ws-confirmed').value === 'true',
+    roles: []
+  });
+  saveAdminData();
+  renderAll();
+  document.getElementById('admin-ws-name').value = '';
+  document.getElementById('admin-ws-lead').value = '';
+  document.getElementById('admin-ws-contact').value = '';
+  document.getElementById('admin-ws-time').value = '';
+  showToast(`Workstream "${name}" added!`);
+}
+
+function saveAdminData() {
+  const adminState = WORKSTREAMS.map(ws => ({
+    id: ws.id, name: ws.name, lead: ws.lead, contact: ws.contact, time: ws.time, confirmed: ws.confirmed,
+    roles: ws.roles.map(r => ({role:r.role, count:r.count, time:r.time, start:r.start, end:r.end, assigned:r.assigned, notes:r.notes, forceConfirmed:r.forceConfirmed}))
+  }));
+  localStorage.setItem('udaan2026_admin', JSON.stringify(adminState));
+  saveData();
+}
+
+function loadAdminData() {
+  const saved = localStorage.getItem('udaan2026_admin');
+  if (saved) {
+    const data = JSON.parse(saved);
+    WORKSTREAMS.length = 0;
+    data.forEach(ws => WORKSTREAMS.push(ws));
+  }
+}
+
+function exportAllData() {
+  const payload = {
+    workstreams: WORKSTREAMS,
+    volunteers: getVolunteers(),
+    exported: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'udaan2026_volunteer_data.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported!');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.workstreams) {
+        WORKSTREAMS.length = 0;
+        data.workstreams.forEach(ws => WORKSTREAMS.push(ws));
+        saveAdminData();
+      }
+      if (data.volunteers) { saveVolunteers(data.volunteers); }
+      renderAll();
+      showToast('Data imported successfully!');
+    } catch(err) { showToast('Error: Invalid JSON file'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetAllData() {
+  if (!confirm('Reset ALL data to factory defaults? This removes all assignments, signups, and custom changes.')) return;
+  localStorage.removeItem('udaan2026_admin');
+  localStorage.removeItem('udaan2026_assignments');
+  localStorage.removeItem('udaan2026_volunteers');
+  location.reload();
+}
+
+// Load admin overrides before initial render
+loadAdminData();
+
+// Pre-seed confirmed volunteers if roster is empty
+function seedVolunteers() {
+  const vols = getVolunteers();
+  if (vols.length === 0) {
+    const seeds = [
+      {name:'Ajith Kotharamath', phone:'', email:'', from:'10:45 AM', until:'8:30 PM', area:'Tech Team', restrictions:'', skills:['AV tech'], status:'Confirmed'},
+      {name:'Roopesh Kelambeth', phone:'(425) 516-2595', email:'', from:'1:45 PM', until:'8:30 PM', area:'Tech Team', restrictions:'', skills:['Photography'], status:'Confirmed'},
+      {name:'Shibu Baby', phone:'', email:'', from:'10:45 AM', until:'8:30 PM', area:'Tech Team', restrictions:'', skills:['AV tech'], status:'Confirmed'},
+      {name:'Sabitha Brijesh', phone:'', email:'', from:'10:45 AM', until:'8:30 PM', area:'Tech Team', restrictions:'', skills:['AV tech'], status:'Confirmed'},
+      {name:'Mithun', phone:'(425) 623-0872', email:'', from:'10:45 AM', until:'8:30 PM', area:'Tech Team', restrictions:'', skills:['AV tech'], status:'Confirmed'},
+      {name:'Nithin', phone:'(206) 910-8816', email:'', from:'2:45 PM', until:'8:00 PM', area:'Auditorium Management', restrictions:'', skills:[], status:'Confirmed'}
+    ];
+    saveVolunteers(seeds);
+  }
+}
+seedVolunteers();
+
+loadData();
+renderAll();
+</script>
+</body>
+</html>
