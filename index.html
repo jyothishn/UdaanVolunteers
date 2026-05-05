@@ -132,6 +132,18 @@ body { padding-bottom: 50px; }
 </head>
 <body>
 
+<div id="auth-wall" style="display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#4B0082,#6A0DAD)">
+  <div style="background:white;padding:32px;border-radius:12px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3);max-width:350px;width:90%">
+    <div style="font-size:2.5rem;margin-bottom:12px">🔒</div>
+    <h2 style="color:#4B0082;margin-bottom:4px">UDAAN 2026</h2>
+    <p style="color:#666;font-size:0.85rem;margin-bottom:20px">Volunteer Command Center — Admin Access</p>
+    <input type="password" id="auth-password" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkAuth()" style="width:100%;padding:10px;border:2px solid #ddd;border-radius:6px;font-size:1rem;margin-bottom:12px">
+    <button onclick="checkAuth()" style="width:100%;padding:12px;background:linear-gradient(135deg,#B8860B,#DAA520);color:white;border:none;border-radius:6px;font-size:1rem;font-weight:700;cursor:pointer">Enter</button>
+    <p id="auth-error" style="color:#C62828;font-size:0.8rem;margin-top:8px;display:none">Incorrect password</p>
+  </div>
+</div>
+
+<div id="main-app" style="display:none">
 <div class="header">
   <div>
     <h1>🎭 UDAAN Dance Competition 2026</h1>
@@ -974,6 +986,26 @@ loadData();
 renderAll();
 // Auto-sync from Google Sheet on load
 setTimeout(loadFromSheet, 1000);
+</script>
+</div><!-- end main-app -->
+
+<script>
+function checkAuth() {
+  const pw = document.getElementById('auth-password').value;
+  if (pw === 'AranguUdaan26!') {
+    document.getElementById('auth-wall').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    sessionStorage.setItem('udaan_auth', 'true');
+  } else {
+    document.getElementById('auth-error').style.display = 'block';
+    document.getElementById('auth-password').value = '';
+  }
+}
+// Remember auth for this browser session
+if (sessionStorage.getItem('udaan_auth') === 'true') {
+  document.getElementById('auth-wall').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+}
 </script>
 </body>
 </html>
