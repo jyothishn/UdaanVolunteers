@@ -251,7 +251,8 @@ body { padding-bottom: 50px; }
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <h3 style="color:var(--purple)">Registered Volunteers</h3>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-sm" style="background:var(--green);color:white" onclick="loadFromSheet()">🔄 Sync from Sheet</button>
+          <button class="btn btn-sm" style="background:var(--green);color:white" onclick="loadFromSheet()">🔄 Sync Signups</button>
+          <button class="btn btn-sm" style="background:var(--blue);color:white" onclick="loadAssignmentsFromSheet()">🔄 Sync Assignments</button>
           <button class="btn btn-gold btn-sm" onclick="exportVolunteersCSV()">📥 Export CSV</button>
         </div>
       </div>
@@ -613,8 +614,13 @@ function assignFromModal() {
   const name = document.getElementById('modal-name-input').value.trim();
   if (!assignTarget) return;
   const ws = WORKSTREAMS.find(w=>w.id===assignTarget.wsId);
-  ws.roles[assignTarget.ri].assigned = name;
+  const role = ws.roles[assignTarget.ri];
+  role.assigned = name;
   saveData(); renderAll(); closeModal(); showToast(name ? `Assigned: ${name}` : 'Assignment cleared');
+  // Sync assignment to Google Sheet backend
+  fetch(SHEETS_API, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'assign', workstream:ws.name, role:role.role, assigned:name})
+  }).catch(()=> console.log('Assignment sheet sync failed'));
 }
 
 function confirmRole(wsId, ri) {
@@ -690,6 +696,24 @@ function loadFromSheet() {
       showToast(`Loaded ${vols.length} volunteers from sheet`);
     })
     .catch(e => console.log('Sheet load failed:', e));
+}
+
+function loadAssignmentsFromSheet() {
+  fetch(SHEETS_API + '?sheet=assignments')
+    .then(r => r.json())
+    .then(rows => {
+      if (!rows || !rows.length) return;
+      rows.forEach(r => {
+        const ws = WORKSTREAMS.find(w => w.name === r['Workstream']);
+        if (ws) {
+          const role = ws.roles.find(rl => rl.role === r['Role']);
+          if (role) role.assigned = r['Assigned'] || '';
+        }
+      });
+      saveData(); renderAll();
+      showToast(`Loaded ${rows.length} assignments from sheet`);
+    })
+    .catch(e => console.log('Assignment load failed:', e));
 }
 
 function removeVolunteer(i) { const v=getVolunteers(); v.splice(i,1); saveVolunteers(v); renderSignup(); showToast('Removed locally. Edit Google Sheet to remove permanently.'); }
@@ -986,6 +1010,7 @@ loadData();
 renderAll();
 // Auto-sync from Google Sheet on load
 setTimeout(loadFromSheet, 1000);
+setTimeout(loadAssignmentsFromSheet, 2000);
 </script>
 </div><!-- end main-app -->
 
