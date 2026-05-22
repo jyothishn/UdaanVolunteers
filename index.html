@@ -549,7 +549,15 @@ function renderWorkstreams() {
     const pendingBadge = !ws.confirmed ? '<span class="pending-badge">⚠️ PENDING</span>' : '';
     let wsTotal=0, wsFilled=0;
     ws.roles.forEach(r => { wsTotal += r.count; if(r.assigned) wsFilled += r.count; });
-    html += `<div class="workstream-section" data-ws="${ws.id}" data-confirmed="${ws.confirmed}">
+    // Check if any role in this workstream passes the filter
+    const wsHasVisibleRole = ws.roles.some(r => {
+      return currentFilter === 'all' ||
+        (currentFilter === 'confirmed' && (ws.confirmed || r.forceConfirmed)) ||
+        (currentFilter === 'pending' && !ws.confirmed && !r.forceConfirmed) ||
+        (currentFilter === 'unfilled' && !r.assigned && (ws.confirmed || r.forceConfirmed)) ||
+        (currentFilter === 'filled' && r.assigned);
+    });
+    html += `<div class="workstream-section" data-ws="${ws.id}" data-confirmed="${ws.confirmed}" style="display:${wsHasVisibleRole?'':'none'}">
       <div class="workstream-header" onclick="toggleWS(this)">
         <div><h3><span class="ws-colors" style="background:${WS_COLORS[wi]}"></span>${ws.name} ${pendingBadge}</h3><div class="meta">Lead: ${ws.lead} | ${ws.contact} | ${ws.time} | ${wsFilled}/${wsTotal} filled</div></div>
         <span class="toggle">▼</span>
