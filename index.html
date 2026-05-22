@@ -502,10 +502,10 @@ function getStats() {
 function renderDashboard() {
   const s = getStats();
   document.getElementById('summary-cards').innerHTML = `
-    <div class="card"><div class="number">${s.total}</div><div class="label">Total Positions</div></div>
-    <div class="card filled"><div class="number">${s.filled}</div><div class="label">Filled</div></div>
-    <div class="card unfilled"><div class="number">${s.unfilled}</div><div class="label">Unfilled (Confirmed)</div></div>
-    <div class="card pending"><div class="number">${s.pending}</div><div class="label">Pending (Unconfirmed)</div></div>
+    <div class="card" style="cursor:pointer" onclick="clickStatFilter('all')"><div class="number">${s.total}</div><div class="label">Total Positions</div></div>
+    <div class="card filled" style="cursor:pointer" onclick="clickStatFilter('filled')"><div class="number">${s.filled}</div><div class="label">Filled</div></div>
+    <div class="card unfilled" style="cursor:pointer" onclick="clickStatFilter('unfilled')"><div class="number">${s.unfilled}</div><div class="label">Unfilled (Confirmed)</div></div>
+    <div class="card pending" style="cursor:pointer" onclick="clickStatFilter('pending')"><div class="number">${s.pending}</div><div class="label">Pending (Unconfirmed)</div></div>
   `;
   let chartHTML = '';
   WORKSTREAMS.forEach((ws, i) => {
@@ -561,7 +561,8 @@ function renderWorkstreams() {
       const showRow = currentFilter === 'all' || 
         (currentFilter === 'confirmed' && (ws.confirmed || r.forceConfirmed)) ||
         (currentFilter === 'pending' && !ws.confirmed && !r.forceConfirmed) ||
-        (currentFilter === 'unfilled' && !r.assigned && (ws.confirmed || r.forceConfirmed));
+        (currentFilter === 'unfilled' && !r.assigned && (ws.confirmed || r.forceConfirmed)) ||
+        (currentFilter === 'filled' && r.assigned);
       html += `<tr data-role="${r.role.toLowerCase()}" style="display:${showRow?'':'none'}">
         <td class="status-icon">${status}</td>
         <td>${r.role}</td><td>${r.count}</td><td>${r.time}</td>
@@ -583,8 +584,19 @@ function toggleWS(el) {
 function setFilter(f, btn) {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   renderWorkstreams();
+}
+
+function clickStatFilter(f) {
+  currentFilter = f;
+  // Highlight matching filter button
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(f === 'all' ? 'all' : f));
+  });
+  renderWorkstreams();
+  // Switch to dashboard tab and scroll to workstreams
+  document.getElementById('workstreams-container').scrollIntoView({behavior:'smooth'});
 }
 
 function filterWorkstreams() {
