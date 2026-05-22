@@ -965,6 +965,10 @@ function saveAdminData() {
   }));
   localStorage.setItem('udaan2026_admin', JSON.stringify(adminState));
   saveData();
+  // Sync config to backend
+  fetch(SHEETS_API, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({action:'save_config', workstreams: adminState})
+  }).catch(()=> console.log('Config sync failed'));
 }
 
 function loadAdminData() {
@@ -974,6 +978,20 @@ function loadAdminData() {
     WORKSTREAMS.length = 0;
     data.forEach(ws => WORKSTREAMS.push(ws));
   }
+}
+
+function loadConfigFromSheet() {
+  fetch(SHEETS_API + '?sheet=config')
+    .then(r => r.json())
+    .then(data => {
+      if (!data || !data.length) return;
+      WORKSTREAMS.length = 0;
+      data.forEach(ws => WORKSTREAMS.push(ws));
+      localStorage.setItem('udaan2026_admin', JSON.stringify(data));
+      renderAll();
+      showToast('Config synced from backend');
+    })
+    .catch(e => console.log('Config load failed:', e));
 }
 
 function exportAllData() {
@@ -1043,6 +1061,7 @@ renderAll();
 // Auto-sync from Google Sheet on load
 setTimeout(loadFromSheet, 1000);
 setTimeout(loadAssignmentsFromSheet, 2000);
+setTimeout(loadConfigFromSheet, 1500);
 </script>
 </div><!-- end main-app -->
 
